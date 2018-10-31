@@ -20,6 +20,7 @@
   "lint-staged": {
     "linters": {
       "*.{js,jsx}": [
+        "npm run check-branch",
         "npm run format",
         "npm run lint",
         "git add"
