@@ -5,6 +5,9 @@ es
 # npm
 node_modules
 
+# coverage
+coverage
+
 # Logs
 *.log
 

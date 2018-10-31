@@ -12,7 +12,7 @@ npm install --save redux-meta-object-to-axios-request
 
 ## Usage in middlewares
 
-First, import the middleware creator and include it in `applyMiddleware` when creating the Redux store. **You need to call it as a function (See later why on configuration section below):**
+Import the middleware creator and include it in `applyMiddleware` when creating the Redux store.
 
 ```js
 import { applyMiddleware, createStore } from 'redux';
@@ -43,10 +43,10 @@ To use the middleware, dispatch a `promise` property within the `meta` of the ac
 
 Example:
 
-The below action creator, when triggered `dispatch(addTodo('use redux-meta-object-to-axios-request'))`
+The below action creator, when triggered `dispatch(addTodoActionCreator('use redux-meta-object-to-axios-request'))`
 
 ```js
-export function addTodo(text) {
+export function addTodoActionCreator(text) {
   return {
     type: "ADD_TODO",
     payload: {
@@ -95,6 +95,112 @@ const middleware = [
 ]
 
 const createStoreWithMiddleware = applyMiddleware(...middlewares)(createStore);
+```
+
+## Advanced Usage
+
+- to save the token to the token storage, add the `saveToken` flag:
+
+```js
+export function loginActionCreator({ username, password }) {
+  return {
+    type: "LOGIN",
+    meta: {
+      promise: {
+        url: "/login",
+        method: "post",
+        saveToken: true, // signal to the middleware to save the token in the storage
+        data: {
+          username,
+          password
+        }
+      }
+    }
+  };
+}
+```
+
+- to remove the token from the token storage, add the `removeToken` flag:
+
+```js
+export function logoutActionCreator({ username, password }) {
+  return {
+    type: "LOGOUT",
+    meta: {
+      promise: {
+        url: "/logout",
+        method: "post",
+        removeToken: true, // signal to the middleware to remove the token from the storage
+      }
+    }
+  };
+}
+```
+
+- to send the token saved in the storage when sending the axios request, use the `authenticated` flag:
+
+```js
+export function authRequestActionCreator({ username, password }) {
+  return {
+    type: "AUTH_REQUEST",
+    meta: {
+      promise: {
+        url: "/auth-route",
+        method: "get",
+        authenticated: true, // signal to the middleware to send the stored token along with the request
+      }
+    }
+  };
+}
+```
+
+- to [debounce](https://codepen.io/nem035/full/xdybvK/) the request you can use a raw number (defaults to trailing debounce) or a `{ wait: Number, leading: Boolean, trailing: Boolean }`:
+
+```js
+export function searchActionCreator(text) {
+  return {
+    type: "SEARCH",
+    meta: {
+      promise: {
+        url: "/search",
+        method: "get",
+        // signal to the middleware to debounce the request after 300ms
+        debounce: 300,
+        // or (same as above)
+        debounce: {
+          wait: 300,
+          trailing: true
+        },
+        // or you can also use leading debounce
+        debounce: {
+          wait: 300,
+          leading: true
+        }
+      }
+    }
+  };
+}
+```
+
+- to propagate any other axios options, just specify them:
+
+```js
+export function uploadImageActionCreator({ data, onUploadProgress }) {
+  return {
+    type: "UPLOAD_IMAGE",
+    meta: {
+      promise: {
+        method: "post",
+        url: "/upload-image",
+        data,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress, // propagate onUploadProgress to axios
+      }
+    }
+  };
+}
 ```
 
 ## License
