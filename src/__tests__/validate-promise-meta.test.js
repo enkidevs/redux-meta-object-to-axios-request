@@ -35,22 +35,6 @@ describe('validate-promise-meta', () => {
     );
   });
 
-  it('should throw for promise meta timeout larger than global timeout', () => {
-    const action = {
-      meta: { promise: { url: 'fake-url', timeout: 100 } },
-    };
-    const globalTimeout = action.meta.promise.timeout - 1;
-    const middlewareWithGlobalAxiosOptions = createMiddleware({
-      axiosOptions: {
-        timeout: globalTimeout,
-      },
-      tokenOptions,
-    });
-    expect(() => middlewareWithGlobalAxiosOptions()()(action)).toThrow(
-      `meta.promise.timeout must be a number < axiosOptions.timeout (${globalTimeout}ms)`
-    );
-  });
-
   it('should throw for invalid promise meta method', () => {
     const action = {
       meta: { promise: { url: 'fake-url', method: null } },

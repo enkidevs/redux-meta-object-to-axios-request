@@ -133,6 +133,27 @@ describe('redux-meta-object-to-axios-request', () => {
     });
   });
 
+  it('should make the request and propagate axios result', async () => {
+    const action = {
+      meta: {
+        promise: {
+          url: 'fake-url',
+        },
+      },
+    };
+    let nextAction;
+    const next = jest.fn(a => {
+      nextAction = a;
+    });
+    middleware()(next)(action);
+    const axiosResult = await nextAction.meta.promise;
+    expect(axiosResult).toMatchObject({
+      data: {
+        token: expect.stringMatching(/\w+/),
+      },
+    });
+  });
+
   it('should make the request and propagate to the next middleware', async () => {
     const action = {
       meta: {
@@ -148,7 +169,7 @@ describe('redux-meta-object-to-axios-request', () => {
     });
     const result = middleware()(next)(action);
     expect(result).toEqual('whatever');
-    const axiosResult = await nextAction.meta.promise;
+    await nextAction.meta.promise;
     expect(next).toHaveBeenCalledWith({
       ...action,
       meta: {
@@ -156,7 +177,6 @@ describe('redux-meta-object-to-axios-request', () => {
         promise: nextAction.meta.promise,
       },
     });
-    expect(axiosResult).toMatchObject({});
     expect(mockAxios.request).toHaveBeenCalledTimes(1);
     expect(mockAxios.request).toHaveBeenCalledWith({
       url: action.meta.promise.url,
@@ -183,18 +203,29 @@ describe('redux-meta-object-to-axios-request', () => {
     const axiosOptions = {
       timeout: 100,
     };
+    const cancelTokenSource = mockAxios.CancelToken.source();
     reduxMetaObjectToAxiosPromise({
       axiosOptions,
       tokenOptions: createTokenOptions(),
     })()(next)(action);
-    try {
-      // cancelled axios promises reject
-      await nextAction.meta.promise;
-    } catch (e) {
-      expect(e.message).toEqual(
-        `Timeout of ${axiosOptions.timeout}ms exceeded.`
-      );
-    }
+    await nextAction.meta.promise;
+    expect(mockAxios.request).toHaveBeenCalledTimes(1);
+    expect(mockAxios.request).toHaveBeenCalledWith({
+      ...axiosOptions,
+      url: action.meta.promise.url,
+      method: 'get', // default value
+      headers: {},
+      transformResponse: expect.arrayContaining([expect.any(Function)]),
+      cancelToken: cancelTokenSource.token,
+    });
+    await new Promise(resolve =>
+      setTimeout(() => {
+        expect(cancelTokenSource.cancel).toHaveBeenCalledWith(
+          `Timeout of ${axiosOptions.timeout}ms exceeded.`
+        );
+        resolve();
+      }, axiosOptions.timeout)
+    );
   });
 
   it('should debounce the request based on given milliseconds (trailing by default)', async () => {
@@ -264,8 +295,7 @@ describe('redux-meta-object-to-axios-request', () => {
         },
       },
     };
-    const next = jest.fn(() => 'whatever');
-    const middlewareAction = middleware()(next);
+    const middlewareAction = middleware()(() => {});
     for (let i = 0; i < 1000; i += 1) {
       middlewareAction(action);
     }
@@ -273,5 +303,82 @@ describe('redux-meta-object-to-axios-request', () => {
     setTimeout(() => {
       expect(mockAxios.request).toHaveBeenCalledTimes(1);
     }, action.meta.promise.debounce);
+  });
+
+  it('should send the token with authenticated requests', async () => {
+    const action = {
+      meta: {
+        promise: {
+          url: 'fake-url',
+          authenticated: true,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        },
+      },
+    };
+    let nextAction;
+    const next = jest.fn(a => {
+      nextAction = a;
+      return 'whatever';
+    });
+
+    const authToken = 'fakeAuthToken';
+    reduxMetaObjectToAxiosPromise({
+      tokenOptions: createTokenOptions(authToken),
+    })()(next)(action);
+    await nextAction.meta.promise;
+    expect(mockAxios.request).toHaveBeenCalledTimes(1);
+    expect(mockAxios.request).toHaveBeenCalledWith({
+      url: action.meta.promise.url,
+      method: 'get', // default value
+      timeout: 0, // default value
+      transformResponse: expect.arrayContaining([expect.any(Function)]),
+      headers: {
+        ...action.meta.promise.headers,
+        'x-access-token': authToken,
+      },
+    });
+  });
+
+  it('should propagate axios options', async () => {
+    const action = {
+      meta: {
+        promise: {
+          url: 'fake-url',
+        },
+      },
+    };
+    let nextAction;
+    const next = jest.fn(a => {
+      nextAction = a;
+      return 'whatever';
+    });
+
+    const authToken = 'fakeAuthToken';
+    const axiosOptions = {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 123,
+      transformResponse: [jest.fn()],
+      whatever: true,
+    };
+    reduxMetaObjectToAxiosPromise({
+      axiosOptions,
+      tokenOptions: createTokenOptions(authToken),
+    })()(next)(action);
+    await nextAction.meta.promise;
+    expect(mockAxios.request).toHaveBeenCalledTimes(1);
+    expect(mockAxios.request).toHaveBeenCalledWith({
+      ...axiosOptions,
+      url: action.meta.promise.url,
+      method: 'get', // default value
+      transformResponse: expect.arrayContaining([
+        expect.any(Function),
+        ...axiosOptions.transformResponse,
+      ]),
+      cancelToken: mockAxios.CancelToken.source().token,
+    });
   });
 });

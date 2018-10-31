@@ -69,6 +69,7 @@ export default function reduxMetaObjectToAxiosPromise({
 
     const headers = accessToken => ({
       ...axiosOptions.headers,
+      ...action.meta.promise.headers,
       ...(typeof accessToken !== 'string'
         ? {}
         : { 'x-access-token': accessToken }),
@@ -76,12 +77,13 @@ export default function reduxMetaObjectToAxiosPromise({
 
     const buildOptions = accessToken => ({
       ...axiosOptions,
-      ...action.meta.promise.timeout,
-      timeout: !action.meta.promise.timeout ? 0 : action.meta.promise.timeout,
       method: !action.meta.promise.method
         ? 'get'
         : action.meta.promise.method.toLowerCase(),
       url: action.meta.promise.url,
+      timeout: !action.meta.promise.timeout
+        ? axiosOptions.timeout || 0
+        : action.meta.promise.timeout,
       transformResponse,
       headers: headers(accessToken),
     });
