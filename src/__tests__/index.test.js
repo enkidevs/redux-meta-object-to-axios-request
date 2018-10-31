@@ -1,22 +1,31 @@
 import mockAxios from 'axios';
-import createMiddleware from '../index';
+import reduxMetaObjectToAxiosPromise from '../index';
 
 jest.mock('axios');
 
 describe('redux-meta-object-to-axios-request', () => {
   let middleware;
 
-  const tokenOptions = {
-    storage: {
-      getItem: () => {},
-      setItem: () => {},
-      removeItem: () => {},
-    },
+  const createTokenOptions = (initialToken = null, key) => {
+    let token = initialToken;
+    return {
+      key,
+      storage: {
+        getItem: jest.fn(() => token),
+        setItem: jest.fn((_, t) => {
+          token = t;
+        }),
+        removeItem: jest.fn(() => {
+          token = initialToken;
+        }),
+      },
+    };
   };
 
   beforeEach(() => {
-    middleware = createMiddleware({
-      tokenOptions,
+    jest.clearAllMocks();
+    middleware = reduxMetaObjectToAxiosPromise({
+      tokenOptions: createTokenOptions(),
     });
   });
 
@@ -30,63 +39,98 @@ describe('redux-meta-object-to-axios-request', () => {
   it('should skip non-meta actions', () => {
     const next = jest.fn(() => 'whatever');
 
+    expect(middleware()(next)()).toBe(next());
+    expect(next).toHaveBeenCalledWith({});
+
     const actionWithoutMeta = {};
-    const result1 = middleware()(next)(actionWithoutMeta);
-    expect(result1).toBe(next());
+    expect(middleware()(next)(actionWithoutMeta)).toBe(next());
     expect(next).toHaveBeenCalledWith(actionWithoutMeta);
 
     const actionWithoutPromiseMeta = { meta: {} };
-    const result2 = middleware()(next)(actionWithoutPromiseMeta);
-    expect(result2).toBe(next());
+    expect(middleware()(next)(actionWithoutPromiseMeta)).toBe(next());
     expect(next).toHaveBeenCalledWith(actionWithoutPromiseMeta);
 
     const actionWithoutValidPromiseMeta = { meta: { promise: null } };
-    const result3 = middleware()(next)(actionWithoutValidPromiseMeta);
-    expect(result3).toBe(next());
+    expect(middleware()(next)(actionWithoutValidPromiseMeta)).toBe(next());
     expect(next).toHaveBeenCalledWith(actionWithoutValidPromiseMeta);
   });
 
-  it('should throw for invalid promise meta url', () => {
+  it('should save token', done => {
     const action = {
-      meta: { promise: { url: null } },
-    };
-    expect(() => middleware()()(action)).toThrow(
-      'meta.promise.url must be a non-empty string'
-    );
-  });
-
-  it('should throw for invalid promise meta timeout', () => {
-    const action = {
-      meta: { promise: { url: 'fake-url', timeout: null } },
-    };
-    expect(() => middleware()()(action)).toThrow(
-      'meta.promise.timeout must be a number > 0'
-    );
-  });
-
-  it('should throw for promise meta timeout larger than global timeout', () => {
-    const action = {
-      meta: { promise: { url: 'fake-url', timeout: 100 } },
-    };
-    const globalTimeout = action.meta.promise.timeout - 1;
-    const middlewareWithGlobalAxiosOptions = createMiddleware({
-      axiosOptions: {
-        timeout: globalTimeout,
+      meta: {
+        promise: {
+          url: 'fake-url',
+          saveToken: true,
+        },
       },
+    };
+    const tokenOptions = createTokenOptions();
+    reduxMetaObjectToAxiosPromise({
       tokenOptions,
+    })()(() => {})(action);
+    // we have to call setTimeout to check for token existence
+    // because token is saved via promises (microtasks)
+    // so we have to create a whole new task using setTimeout
+    // to make sure the token creation promise chain is
+    // finished before checking the value of the saved token
+    setTimeout(() => {
+      expect(tokenOptions.storage.getItem()).toEqual(
+        expect.stringMatching(/\w+/)
+      );
+      done();
     });
-    expect(() => middlewareWithGlobalAxiosOptions()()(action)).toThrow(
-      `meta.promise.timeout must be a number < axiosOptions.timeout (${globalTimeout}ms)`
-    );
   });
 
-  it('should throw for invalid promise meta method', () => {
+  it('should save the token under the given key', done => {
     const action = {
-      meta: { promise: { url: 'fake-url', method: null } },
+      meta: {
+        promise: {
+          url: 'fake-url',
+          saveToken: true,
+        },
+      },
     };
-    expect(() => middleware()()(action)).toThrow(
-      'meta.promise.method must be a non-empty string'
+    const anotherKey = 'anotherKey';
+    const tokenOptions = createTokenOptions(null, anotherKey);
+    reduxMetaObjectToAxiosPromise({
+      tokenOptions,
+    })()(() => {})(action);
+    // we have to call setTimeout to check for token existence
+    // because token is saved via promises (microtasks)
+    // so we have to create a whole new task using setTimeout
+    // to make sure the token creation promise chain is
+    // finished before checking the value of the saved token
+    setTimeout(() => {
+      expect(tokenOptions.storage.setItem).toHaveBeenCalledWith(
+        anotherKey,
+        expect.stringMatching(/\w+/)
+      );
+      done();
+    });
+  });
+
+  it('should remove the token', done => {
+    const action = {
+      meta: {
+        promise: {
+          url: 'fake-url',
+          removeToken: true,
+        },
+      },
+    };
+    const initialToken = 'initialToken';
+    const tokenOptions = createTokenOptions(initialToken);
+    tokenOptions.storage.setItem(
+      'whatever',
+      'another-token-value-different-from-initialToken'
     );
+    reduxMetaObjectToAxiosPromise({
+      tokenOptions,
+    })()(() => {})(action);
+    setTimeout(() => {
+      expect(tokenOptions.storage.getItem()).toEqual(initialToken);
+      done();
+    });
   });
 
   it('should make the request and propagate to the next middleware', async () => {
@@ -105,20 +149,21 @@ describe('redux-meta-object-to-axios-request', () => {
     const result = middleware()(next)(action);
     expect(result).toEqual('whatever');
     const axiosResult = await nextAction.meta.promise;
+    expect(next).toHaveBeenCalledWith({
+      ...action,
+      meta: {
+        ...action.meta,
+        promise: nextAction.meta.promise,
+      },
+    });
     expect(axiosResult).toMatchObject({});
+    expect(mockAxios.request).toHaveBeenCalledTimes(1);
     expect(mockAxios.request).toHaveBeenCalledWith({
       url: action.meta.promise.url,
       method: 'get', // default value
       timeout: 0, // default value
       transformResponse: expect.arrayContaining([expect.any(Function)]),
       headers: {},
-    });
-    expect(next).toHaveBeenCalledWith({
-      ...action,
-      meta: {
-        ...action.meta,
-        promise: expect.any(Promise),
-      },
     });
   });
 
@@ -138,17 +183,95 @@ describe('redux-meta-object-to-axios-request', () => {
     const axiosOptions = {
       timeout: 100,
     };
-    const middlewareWithGlobalAxiosOptions = createMiddleware({
+    reduxMetaObjectToAxiosPromise({
       axiosOptions,
-      tokenOptions,
-    });
-    middlewareWithGlobalAxiosOptions()(next)(action);
+      tokenOptions: createTokenOptions(),
+    })()(next)(action);
     try {
+      // cancelled axios promises reject
       await nextAction.meta.promise;
     } catch (e) {
       expect(e.message).toEqual(
         `Timeout of ${axiosOptions.timeout}ms exceeded.`
       );
     }
+  });
+
+  it('should debounce the request based on given milliseconds (trailing by default)', async () => {
+    const action = {
+      meta: {
+        promise: {
+          url: 'fake-url',
+          debounce: 300,
+        },
+      },
+    };
+    let nextAction;
+    const next = jest.fn(a => {
+      nextAction = a;
+      return 'whatever';
+    });
+    const middlewareAction = middleware()(next);
+    for (let i = 0; i < 1000; i += 1) {
+      middlewareAction(action);
+    }
+    // make sure the function isn't called before the debouncing period
+    setTimeout(() => {
+      expect(mockAxios.request).not.toHaveBeenCalled();
+    }, action.meta.promise.debounce - 1);
+    await nextAction.meta.promise;
+    expect(mockAxios.request).toHaveBeenCalledTimes(1);
+  });
+
+  it('should debounce the request based on given milliseconds and the trailing flag', async () => {
+    const action = {
+      meta: {
+        promise: {
+          url: 'fake-url',
+          debounce: {
+            wait: 300,
+            trailing: true,
+          },
+        },
+      },
+    };
+    let nextAction;
+    const next = jest.fn(a => {
+      nextAction = a;
+      return 'whatever';
+    });
+    const middlewareAction = middleware()(next);
+    for (let i = 0; i < 1000; i += 1) {
+      middlewareAction(action);
+    }
+    // make sure the function isn't called before the debouncing period
+    setTimeout(() => {
+      expect(mockAxios.request).not.toHaveBeenCalled();
+    }, action.meta.promise.debounce - 1);
+    await nextAction.meta.promise;
+    expect(mockAxios.request).toHaveBeenCalledTimes(1);
+  });
+
+  it('should debounce the request based on given milliseconds and the leading flag', async () => {
+    const action = {
+      meta: {
+        promise: {
+          url: 'fake-url',
+          debounce: {
+            wait: 300,
+            leading: true,
+          },
+        },
+      },
+    };
+    const next = jest.fn(() => 'whatever');
+    const middlewareAction = middleware()(next);
+    for (let i = 0; i < 1000; i += 1) {
+      middlewareAction(action);
+    }
+    // make sure the function is called once before the debouncing period
+    setTimeout(() => {
+      expect(mockAxios.request).toHaveBeenCalledTimes(1);
+    }, action.meta.promise.debounce);
   });
 });

@@ -1,8 +1,19 @@
 export default {
-  request: jest.fn(() => Promise.resolve({ data: {} })),
+  request: jest.fn(
+    arg =>
+      new Promise(resolve => {
+        setTimeout(
+          resolve,
+          arg.timeout || 0,
+          arg.transformResponse.reduce((data, transform) => transform(data), {
+            token: 'fake-auth-token',
+          })
+        );
+      })
+  ),
   CancelToken: {
     source: jest.fn(() => ({
-      token: 'fake-token',
+      token: 'fake-cancel-token',
       cancel: jest.fn(),
     })),
   },

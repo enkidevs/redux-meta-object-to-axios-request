@@ -8,7 +8,9 @@ module.exports = {
     [
       '@babel/preset-env',
       {
-        debug: process.env.NODE_ENV !== 'production',
+        debug:
+          Boolean(process.env.CI) || // always show babel debug info in the CI environment
+          !['production', 'test'].includes(process.env.NODE_ENV),
         useBuiltIns: 'entry',
         modules,
         loose: true,
