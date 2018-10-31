@@ -1,0 +1,3 @@
+parser: babel-eslint
+extends:
+  - '@enkidevs/eslint-config-frontend'

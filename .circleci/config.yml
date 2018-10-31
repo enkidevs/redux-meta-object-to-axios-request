@@ -1,0 +1,77 @@
+version: 2
+
+jobs:
+  install:
+    working_directory: ~/redux-meta-object-to-axios-request
+    docker:
+      - image: circle/node:8.10.0
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/redux-meta-object-to-axios-request
+      - run:
+          name: NPM Install
+          command: npm install
+      - persist_to_workspace:
+          root: ~/redux-meta-object-to-axios-request
+          paths: .
+  build:
+    working_directory: ~/redux-meta-object-to-axios-request
+    docker:
+      - image: circle/node:8.10.0
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/redux-meta-object-to-axios-request
+      - run:
+          name: Build
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              NODE_ENV=production \
+              npm run build
+            else
+              NODE_ENV=development \
+              npm run build
+            fi
+      - persist_to_workspace:
+          root: ~/redux-meta-object-to-axios-request
+          paths:
+            - ./dist
+            - ./es
+  lint:
+    working_directory: ~/redux-meta-object-to-axios-request
+    docker:
+      - image: circle/node:8.10.0
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/redux-meta-object-to-axios-request
+      - run:
+          name: Lint
+          command: npm run lint:ci
+  test:
+    working_directory: ~/redux-meta-object-to-axios-request
+    docker:
+      - image: circle/node:8.10.0
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/redux-meta-object-to-axios-request
+      - run:
+          name: Lint
+          command: npm run test:ci
+
+workflows:
+  version: 2
+  install_build_lint_deploy:
+    jobs:
+      - install
+      - build:
+          requires:
+            - install
+      - lint:
+          requires:
+            - install
+      - test:
+          requires:
+            - install
