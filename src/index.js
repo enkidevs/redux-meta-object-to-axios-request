@@ -41,7 +41,15 @@ export default function reduxMetaObjectToAxiosPromise({
 
     validatePromiseMeta(action.meta.promise, axiosOptions);
 
-    const getTokenIfNeeded = !action.meta.promise.authenticated
+    const {
+      authenticated,
+      headers,
+      removeToken,
+      saveToken,
+      ...restOfPromiseMeta
+    } = action.meta.promise;
+
+    const getTokenIfNeeded = !authenticated
       ? Promise.resolve()
       : Promise.resolve(token.get());
 
@@ -67,9 +75,9 @@ export default function reduxMetaObjectToAxiosPromise({
         : axiosOptions.transformResponse),
     ];
 
-    const headers = accessToken => ({
+    const buildHeaders = accessToken => ({
       ...axiosOptions.headers,
-      ...action.meta.promise.headers,
+      ...headers,
       ...(typeof accessToken !== 'string'
         ? {}
         : { 'x-access-token': accessToken }),
@@ -77,6 +85,7 @@ export default function reduxMetaObjectToAxiosPromise({
 
     const buildOptions = accessToken => ({
       ...axiosOptions,
+      ...restOfPromiseMeta,
       method: !action.meta.promise.method
         ? 'get'
         : action.meta.promise.method.toLowerCase(),
@@ -85,7 +94,7 @@ export default function reduxMetaObjectToAxiosPromise({
         ? axiosOptions.timeout || 0
         : action.meta.promise.timeout,
       transformResponse,
-      headers: headers(accessToken),
+      headers: buildHeaders(accessToken),
     });
 
     const addCancelationIfNeeded = options => {
