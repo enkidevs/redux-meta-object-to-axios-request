@@ -59,6 +59,7 @@
     "json-parse-safe": "^1.0.5"
   },
   "devDependencies": {
+    "@babel/cli": "^7.1.2",
     "@babel/core": "^7.1.2",
     "@babel/preset-env": "^7.1.0",
     "@enkidevs/assert-restricted-branch": "^1.0.2",
