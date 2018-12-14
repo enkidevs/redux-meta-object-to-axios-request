@@ -67,7 +67,7 @@ jobs:
       - attach_workspace:
           at: ~/redux-meta-object-to-axios-request
       - run:
-          name: Lint
+          name: Test
           command: npm run test:ci
 
 workflows:
