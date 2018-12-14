@@ -7,7 +7,7 @@ redux-meta-object-to-axios-request
 Redux [middleware](http://rackt.github.io/redux/docs/advanced/Middleware.html) middleware to transform an object into a promise.
 
 ```bash
-npm install --save redux-meta-object-to-axios-request
+npm install --save @enkidevs/redux-meta-object-to-axios-request
 ```
 
 ## Usage in middlewares
