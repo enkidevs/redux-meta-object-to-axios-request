@@ -4,7 +4,7 @@ redux-meta-object-to-axios-request
 [![CircleCI](https://circleci.com/gh/enkidevs/redux-meta-object-to-axios-request.svg?style=svg)](https://circleci.com/gh/enkidevs/redux-meta-object-to-axios-request)
 [![npm version](https://img.shields.io/npm/v/@enkidevs/redux-meta-object-to-axios-request.svg?style=flat-square)](https://www.npmjs.com/package/@enkidevs/redux-meta-object-to-axios-request)
 
-Redux [middleware](http://rackt.github.io/redux/docs/advanced/Middleware.html) middleware to transform an object into a promise.
+Redux [middleware](http://rackt.github.io/redux/docs/advanced/Middleware.html) to transform a specific object into a promise-returning axios request.
 
 ```bash
 npm install --save @enkidevs/redux-meta-object-to-axios-request
