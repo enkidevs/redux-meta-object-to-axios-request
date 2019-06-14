@@ -15,9 +15,7 @@ export default function validatePromiseMeta(promise, axiosOptions) {
     if (isPositiveNumber(axiosOptions.timeout)) {
       invariant(
         promise.timeout < axiosOptions.timeout,
-        `meta.promise.timeout must be a number < axiosOptions.timeout (${
-          axiosOptions.timeout
-        }ms)`
+        `meta.promise.timeout must be a number < axiosOptions.timeout (${axiosOptions.timeout}ms)`
       );
     }
   }
