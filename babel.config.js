@@ -11,9 +11,10 @@ module.exports = {
         debug:
           Boolean(process.env.CI) || // always show babel debug info in the CI environment
           !['production', 'test'].includes(process.env.NODE_ENV),
-        useBuiltIns: 'entry',
+        useBuiltIns: false,
         modules,
         loose: true,
+        exclude: ['@babel/plugin-transform-regenerator'],
       },
     ],
   ],
