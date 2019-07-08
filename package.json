@@ -18,14 +18,12 @@
     "access": "public"
   },
   "lint-staged": {
-    "linters": {
-      "*.{js,jsx}": [
-        "npm run check-branch",
-        "npm run format",
-        "npm run lint",
-        "git add"
-      ]
-    }
+    "*.{js,jsx}": [
+      "npm run check-branch",
+      "npm run format",
+      "npm run lint",
+      "git add"
+    ]
   },
   "scripts": {
     "build:cjs": "BABEL_ENV=cjs babel src --out-dir dist --ignore \"src/**/__tests__\",\"src/**/__mocks__\"",
@@ -71,12 +69,12 @@
     "@enkidevs/eslint-config-frontend": "^1.0.0",
     "babel-core": "^7.0.0-bridge.0",
     "babel-eslint": "^10.0.1",
-    "babel-jest": "^23.6.0",
+    "babel-jest": "^24.8.0",
     "eslint": "^5.8.0",
     "husky": "^3.0.0",
-    "jest": "^23.6.0",
+    "jest": "^24.8.0",
     "lint-staged": "^9.1.0",
     "prettier": "^1.14.3",
-    "trash-cli": "^1.4.0"
+    "trash-cli": "^3.0.0"
   }
 }
