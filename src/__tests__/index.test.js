@@ -55,7 +55,7 @@ describe('redux-meta-object-to-axios-request', () => {
     expect(next).toHaveBeenCalledWith(actionWithoutValidPromiseMeta);
   });
 
-  it('should save token', done => {
+  it('should save token', () => {
     const action = {
       meta: {
         promise: {
@@ -73,15 +73,17 @@ describe('redux-meta-object-to-axios-request', () => {
     // so we have to create a whole new task using setTimeout
     // to make sure the token creation promise chain is
     // finished before checking the value of the saved token
-    setTimeout(() => {
-      expect(tokenOptions.storage.getItem()).toEqual(
-        expect.stringMatching(/\w+/)
-      );
-      done();
-    });
+    return new Promise(resolve =>
+      setTimeout(() => {
+        expect(tokenOptions.storage.getItem()).toEqual(
+          expect.stringMatching(/\w+/)
+        );
+        resolve();
+      })
+    );
   });
 
-  it('should save the token under the given key', done => {
+  it('should save the token under the given key', () => {
     const action = {
       meta: {
         promise: {
@@ -100,16 +102,18 @@ describe('redux-meta-object-to-axios-request', () => {
     // so we have to create a whole new task using setTimeout
     // to make sure the token creation promise chain is
     // finished before checking the value of the saved token
-    setTimeout(() => {
-      expect(tokenOptions.storage.setItem).toHaveBeenCalledWith(
-        anotherKey,
-        expect.stringMatching(/\w+/)
-      );
-      done();
-    });
+    return new Promise(resolve =>
+      setTimeout(() => {
+        expect(tokenOptions.storage.setItem).toHaveBeenCalledWith(
+          anotherKey,
+          expect.stringMatching(/\w+/)
+        );
+        resolve();
+      })
+    );
   });
 
-  it('should remove the token', done => {
+  it('should remove the token', () => {
     const action = {
       meta: {
         promise: {
@@ -127,10 +131,12 @@ describe('redux-meta-object-to-axios-request', () => {
     reduxMetaObjectToAxiosPromise({
       tokenOptions,
     })()(() => {})(action);
-    setTimeout(() => {
-      expect(tokenOptions.storage.getItem()).toEqual(initialToken);
-      done();
-    });
+    return new Promise(resolve =>
+      setTimeout(() => {
+        expect(tokenOptions.storage.getItem()).toEqual(initialToken);
+        resolve();
+      })
+    );
   });
 
   it('should make the request and propagate axios result', async () => {
@@ -300,9 +306,12 @@ describe('redux-meta-object-to-axios-request', () => {
       middlewareAction(action);
     }
     // make sure the function is called once before the debouncing period
-    setTimeout(() => {
-      expect(mockAxios.request).toHaveBeenCalledTimes(1);
-    }, action.meta.promise.debounce);
+    return new Promise(resolve =>
+      setTimeout(() => {
+        expect(mockAxios.request).toHaveBeenCalledTimes(1);
+        resolve();
+      }, action.meta.promise.debounce)
+    );
   });
 
   it('should send the token with authenticated requests', async () => {
