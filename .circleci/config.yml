@@ -4,30 +4,30 @@ jobs:
   install:
     working_directory: ~/redux-meta-object-to-axios-request
     docker:
-      - image: circleci/node:8.10.0
+      - image: circleci/node:12.16.1
     steps:
       - checkout
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "package.json" }}
+            - v2-dependencies-{{ checksum "package.json" }}
             # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
+            - v2-dependencies-
       - attach_workspace:
           at: ~/redux-meta-object-to-axios-request
       - run:
           name: NPM Install
-          command: npm install
+          command: npm ci
       - save_cache:
           paths:
             - node_modules
-          key: v1-dependencies-{{ checksum "package.json" }}
+          key: v2-dependencies-{{ checksum "package.json" }}
       - persist_to_workspace:
           root: ~/redux-meta-object-to-axios-request
           paths: ./node_modules
   build:
     working_directory: ~/redux-meta-object-to-axios-request
     docker:
-      - image: circleci/node:8.10.0
+      - image: circleci/node:12.16.1
     steps:
       - checkout
       - attach_workspace:
@@ -50,7 +50,7 @@ jobs:
   lint:
     working_directory: ~/redux-meta-object-to-axios-request
     docker:
-      - image: circleci/node:8.10.0
+      - image: circleci/node:12.16.1
     steps:
       - checkout
       - attach_workspace:
@@ -61,7 +61,7 @@ jobs:
   test:
     working_directory: ~/redux-meta-object-to-axios-request
     docker:
-      - image: circleci/node:8.10.0
+      - image: circleci/node:12.16.1
     steps:
       - checkout
       - attach_workspace:
