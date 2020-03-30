@@ -73,7 +73,7 @@ describe('redux-meta-object-to-axios-request', () => {
     // so we have to create a whole new task using setTimeout
     // to make sure the token creation promise chain is
     // finished before checking the value of the saved token
-    return new Promise(resolve =>
+    return new Promise((resolve) =>
       setTimeout(() => {
         expect(tokenOptions.storage.getItem()).toEqual(
           expect.stringMatching(/\w+/)
@@ -102,7 +102,7 @@ describe('redux-meta-object-to-axios-request', () => {
     // so we have to create a whole new task using setTimeout
     // to make sure the token creation promise chain is
     // finished before checking the value of the saved token
-    return new Promise(resolve =>
+    return new Promise((resolve) =>
       setTimeout(() => {
         expect(tokenOptions.storage.setItem).toHaveBeenCalledWith(
           anotherKey,
@@ -131,7 +131,7 @@ describe('redux-meta-object-to-axios-request', () => {
     reduxMetaObjectToAxiosPromise({
       tokenOptions,
     })()(() => {})(action);
-    return new Promise(resolve =>
+    return new Promise((resolve) =>
       setTimeout(() => {
         expect(tokenOptions.storage.getItem()).toEqual(initialToken);
         resolve();
@@ -148,7 +148,7 @@ describe('redux-meta-object-to-axios-request', () => {
       },
     };
     let nextAction;
-    const next = jest.fn(a => {
+    const next = jest.fn((a) => {
       nextAction = a;
     });
     middleware()(next)(action);
@@ -169,7 +169,7 @@ describe('redux-meta-object-to-axios-request', () => {
       },
     };
     let nextAction;
-    const next = jest.fn(a => {
+    const next = jest.fn((a) => {
       nextAction = a;
       return 'whatever';
     });
@@ -202,7 +202,7 @@ describe('redux-meta-object-to-axios-request', () => {
       },
     };
     let nextAction;
-    const next = jest.fn(a => {
+    const next = jest.fn((a) => {
       nextAction = a;
       return 'whatever';
     });
@@ -224,7 +224,7 @@ describe('redux-meta-object-to-axios-request', () => {
       transformResponse: expect.arrayContaining([expect.any(Function)]),
       cancelToken: cancelTokenSource.token,
     });
-    await new Promise(resolve =>
+    await new Promise((resolve) =>
       setTimeout(() => {
         expect(cancelTokenSource.cancel).toHaveBeenCalledWith(
           `Timeout of ${axiosOptions.timeout}ms exceeded.`
@@ -244,7 +244,7 @@ describe('redux-meta-object-to-axios-request', () => {
       },
     };
     let nextAction;
-    const next = jest.fn(a => {
+    const next = jest.fn((a) => {
       nextAction = a;
       return 'whatever';
     });
@@ -273,7 +273,7 @@ describe('redux-meta-object-to-axios-request', () => {
       },
     };
     let nextAction;
-    const next = jest.fn(a => {
+    const next = jest.fn((a) => {
       nextAction = a;
       return 'whatever';
     });
@@ -306,7 +306,7 @@ describe('redux-meta-object-to-axios-request', () => {
       middlewareAction(action);
     }
     // make sure the function is called once before the debouncing period
-    return new Promise(resolve =>
+    return new Promise((resolve) =>
       setTimeout(() => {
         expect(mockAxios.request).toHaveBeenCalledTimes(1);
         resolve();
@@ -327,7 +327,7 @@ describe('redux-meta-object-to-axios-request', () => {
       },
     };
     let nextAction;
-    const next = jest.fn(a => {
+    const next = jest.fn((a) => {
       nextAction = a;
       return 'whatever';
     });
@@ -359,7 +359,7 @@ describe('redux-meta-object-to-axios-request', () => {
       },
     };
     let nextAction;
-    const next = jest.fn(a => {
+    const next = jest.fn((a) => {
       nextAction = a;
       return 'whatever';
     });

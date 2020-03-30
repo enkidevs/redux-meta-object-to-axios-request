@@ -25,7 +25,7 @@ function validateStorageApi(storage) {
     storage && typeof storage === 'object',
     'token storage object is required'
   );
-  ['getItem', 'setItem', 'removeItem'].forEach(methodName => {
+  ['getItem', 'setItem', 'removeItem'].forEach((methodName) => {
     invariant(
       typeof storage[methodName] === 'function',
       `token storage object must have a "${methodName}" method`

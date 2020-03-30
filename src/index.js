@@ -28,7 +28,7 @@ export default function reduxMetaObjectToAxiosPromise({
     }, wait);
   }
 
-  return () => next => (action = {}) => {
+  return () => (next) => (action = {}) => {
     // check if we don't need to transform the promise
     if (
       !action ||
@@ -54,7 +54,7 @@ export default function reduxMetaObjectToAxiosPromise({
       : Promise.resolve(token.get());
 
     const transformResponse = [
-      data => {
+      (data) => {
         const removeTokenPromise = action.meta.promise.removeToken
           ? token.remove()
           : Promise.resolve();
@@ -75,7 +75,7 @@ export default function reduxMetaObjectToAxiosPromise({
         : axiosOptions.transformResponse),
     ];
 
-    const buildHeaders = accessToken => ({
+    const buildHeaders = (accessToken) => ({
       ...axiosOptions.headers,
       ...headers,
       ...(typeof accessToken !== 'string'
@@ -83,7 +83,7 @@ export default function reduxMetaObjectToAxiosPromise({
         : { 'x-access-token': accessToken }),
     });
 
-    const buildOptions = accessToken => ({
+    const buildOptions = (accessToken) => ({
       ...axiosOptions,
       ...restOfPromiseMeta,
       method: !action.meta.promise.method
@@ -97,7 +97,7 @@ export default function reduxMetaObjectToAxiosPromise({
       headers: buildHeaders(accessToken),
     });
 
-    const addCancelationIfNeeded = options => {
+    const addCancelationIfNeeded = (options) => {
       // cancel axios request based on the global timeout setting
       // if none or shorter request-specific timeout is provided
       if (
@@ -116,8 +116,8 @@ export default function reduxMetaObjectToAxiosPromise({
       return options;
     };
 
-    const addDebouncingIfNeeded = options =>
-      new Promise(resolve => {
+    const addDebouncingIfNeeded = (options) =>
+      new Promise((resolve) => {
         if (!action.meta.promise.debounce) {
           resolve(options);
         } else {
@@ -157,7 +157,7 @@ export default function reduxMetaObjectToAxiosPromise({
           .then(buildOptions)
           .then(addCancelationIfNeeded)
           .then(addDebouncingIfNeeded)
-          .then(opts => axios.request(opts)),
+          .then((opts) => axios.request(opts)),
       },
     };
 
