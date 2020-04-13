@@ -31,7 +31,6 @@ describe('redux-meta-object-to-axios-request', () => {
 
   it('should create a valid middleware', () => {
     expect(typeof middleware).toBe('function');
-    expect(middleware).toHaveLength(0);
     expect(middleware()).toHaveLength(1);
     expect(middleware()()).toHaveLength(1);
   });
