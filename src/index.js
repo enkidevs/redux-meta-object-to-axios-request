@@ -4,6 +4,7 @@ import createToken from './create-token';
 import validatePromiseMeta, { isPositiveNumber } from './validate-promise-meta';
 
 export default function reduxMetaObjectToAxiosPromise({
+  axiosClient = axios,
   axiosOptions = {},
   tokenOptions = {},
 } = {}) {
@@ -107,7 +108,7 @@ export default function reduxMetaObjectToAxiosPromise({
         return options;
       }
 
-      const source = axios.CancelToken.source();
+      const source = axiosClient.CancelToken.source();
       // eslint-disable-next-line no-param-reassign
       options.cancelToken = source.token;
       setTimeout(() => {
@@ -157,7 +158,7 @@ export default function reduxMetaObjectToAxiosPromise({
           .then(buildOptions)
           .then(addCancelationIfNeeded)
           .then(addDebouncingIfNeeded)
-          .then((opts) => axios.request(opts)),
+          .then((opts) => axiosClient.request(opts)),
       },
     };
 
