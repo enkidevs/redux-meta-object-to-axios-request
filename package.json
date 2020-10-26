@@ -57,7 +57,7 @@
   "author": "nemanjacoder@gmail.com",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.20.0",
+    "axios": "^0.21.0",
     "invariant": "^2.2.4",
     "json-parse-safe": "^2.0.0"
   },
