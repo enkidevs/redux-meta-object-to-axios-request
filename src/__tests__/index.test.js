@@ -192,47 +192,6 @@ describe('redux-meta-object-to-axios-request', () => {
     });
   });
 
-  it('should cancel the request', async () => {
-    const action = {
-      meta: {
-        promise: {
-          url: 'fake-url',
-        },
-      },
-    };
-    let nextAction;
-    const next = jest.fn((a) => {
-      nextAction = a;
-      return 'whatever';
-    });
-    const axiosOptions = {
-      timeout: 100,
-    };
-    const cancelTokenSource = mockAxios.CancelToken.source();
-    reduxMetaObjectToAxiosPromise({
-      axiosOptions,
-      tokenOptions: createTokenOptions(),
-    })()(next)(action);
-    await nextAction.meta.promise;
-    expect(mockAxios.request).toHaveBeenCalledTimes(1);
-    expect(mockAxios.request).toHaveBeenCalledWith({
-      ...axiosOptions,
-      url: action.meta.promise.url,
-      method: 'get', // default value
-      headers: {},
-      transformResponse: expect.arrayContaining([expect.any(Function)]),
-      cancelToken: cancelTokenSource.token,
-    });
-    await new Promise((resolve) =>
-      setTimeout(() => {
-        expect(cancelTokenSource.cancel).toHaveBeenCalledWith(
-          `Timeout of ${axiosOptions.timeout}ms exceeded.`
-        );
-        resolve();
-      }, axiosOptions.timeout)
-    );
-  });
-
   it('should debounce the request based on given milliseconds (trailing by default)', async () => {
     const action = {
       meta: {
@@ -386,7 +345,6 @@ describe('redux-meta-object-to-axios-request', () => {
         expect.any(Function),
         ...axiosOptions.transformResponse,
       ]),
-      cancelToken: mockAxios.CancelToken.source().token,
     });
   });
 });
