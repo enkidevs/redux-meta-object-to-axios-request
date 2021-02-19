@@ -1,8 +1,3 @@
-const cancelTokenSource = {
-  token: 'fake-cancel-token',
-  cancel: jest.fn(),
-};
-
 export default {
   request: jest.fn(
     (arg) =>
@@ -17,7 +12,4 @@ export default {
         });
       })
   ),
-  CancelToken: {
-    source: jest.fn(() => cancelTokenSource),
-  },
 };
