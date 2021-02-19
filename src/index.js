@@ -1,7 +1,7 @@
 import axios from 'axios';
 import parseJSON from 'json-parse-safe';
 import createToken from './create-token';
-import validatePromiseMeta, { isPositiveNumber } from './validate-promise-meta';
+import validatePromiseMeta from './validate-promise-meta';
 
 export default function reduxMetaObjectToAxiosPromise({
   axiosClient = axios,
@@ -98,25 +98,6 @@ export default function reduxMetaObjectToAxiosPromise({
       headers: buildHeaders(accessToken),
     });
 
-    const addCancelationIfNeeded = (options) => {
-      // cancel axios request based on the global timeout setting
-      // if none or shorter request-specific timeout is provided
-      if (
-        !isPositiveNumber(axiosOptions.timeout) ||
-        typeof action.meta.promise.timeout === 'number'
-      ) {
-        return options;
-      }
-
-      const source = axiosClient.CancelToken.source();
-      // eslint-disable-next-line no-param-reassign
-      options.cancelToken = source.token;
-      setTimeout(() => {
-        source.cancel(`Timeout of ${axiosOptions.timeout}ms exceeded.`);
-      }, axiosOptions.timeout);
-      return options;
-    };
-
     const addDebouncingIfNeeded = (options) =>
       new Promise((resolve) => {
         if (!action.meta.promise.debounce) {
@@ -156,7 +137,6 @@ export default function reduxMetaObjectToAxiosPromise({
         ...action.meta,
         promise: getTokenIfNeeded
           .then(buildOptions)
-          .then(addCancelationIfNeeded)
           .then(addDebouncingIfNeeded)
           .then((opts) => axiosClient.request(opts)),
       },
